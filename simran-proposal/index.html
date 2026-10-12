@@ -22,7 +22,7 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html, body { height: 100%; }
+    html { height: 100%; }
 
     body {
       font-family: "Poppins", system-ui, sans-serif;
@@ -30,9 +30,11 @@
       background: linear-gradient(135deg, var(--bg-1), var(--bg-2) 50%, var(--bg-3));
       background-size: 200% 200%;
       animation: bgShift 12s ease-in-out infinite;
-      overflow: hidden;
+      /* Scrolls vertically if the card is taller than the screen (e.g. phone keyboard open) */
+      min-height: 100%;
+      min-height: 100dvh;
+      overflow-x: hidden;
       display: flex;
-      align-items: center;
       justify-content: center;
       padding: 16px;
     }
@@ -78,6 +80,7 @@
       text-align: center;
       box-shadow: 0 20px 50px rgba(232, 74, 127, 0.18);
       display: none;
+      margin: auto 0;
       animation: popIn 0.55s cubic-bezier(.2, .9, .3, 1.2);
     }
     .screen.active { display: block; }
@@ -130,6 +133,8 @@
       cursor: pointer;
       border-radius: 999px;
       font-weight: 600;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
       transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
     }
     .btn:active { transform: scale(0.96); }
@@ -252,8 +257,8 @@
       font-size: 1rem;
       padding: 12px 28px;
       z-index: 50;
-      /* Fast jump so she can never catch it */
-      transition: left 0.12s ease, top 0.12s ease;
+      /* No transition: it teleports, so it never slides across the "Yes" button */
+      transition: none;
     }
     #noBtn.dodging { position: fixed; }
 
@@ -292,6 +297,7 @@
     <h1>Hey Simran,</h1>
     <p>I made a little game for you... answer a few questions and see what's waiting at the end 💕</p>
     <button class="btn btn-primary" id="startBtn">Start Game</button>
+    <noscript><p style="margin-top:16px;color:var(--pink-dark);">This game needs JavaScript. Please open the link in Chrome or Safari 💕</p></noscript>
   </section>
 
   <!-- ==================== QUIZ SCREEN ==================== -->
@@ -642,6 +648,11 @@
       // Move to <body> so "position: fixed" is relative to the whole screen
       if (!noBtn.classList.contains("dodging")) {
         const r = noBtn.getBoundingClientRect();
+        // Invisible stand-in keeps the layout (and the "Yes" button) from shifting
+        const ghost = noBtn.cloneNode(true);
+        ghost.removeAttribute("id");
+        ghost.style.visibility = "hidden";
+        noBtn.before(ghost);
         document.body.appendChild(noBtn);
         noBtn.classList.add("dodging");
         noBtn.style.left = r.left + "px";
@@ -652,13 +663,16 @@
       const maxX = window.innerWidth - w - pad;
       const maxY = window.innerHeight - h - pad;
       const cur = noBtn.getBoundingClientRect();
+      const yes = $("yesBtn").getBoundingClientRect();
+      const coversYes = (x, y) =>
+        x < yes.right + 12 && x + w > yes.left - 12 && y < yes.bottom + 12 && y + h > yes.top - 12;
       let x, y, tries = 0;
-      // Pick a spot reasonably far from where it is now (max 20 attempts)
+      // Pick a spot far from where it is now and never on top of "Yes" (max 50 attempts)
       do {
         x = pad + Math.random() * Math.max(0, maxX - pad);
         y = pad + Math.random() * Math.max(0, maxY - pad);
         tries++;
-      } while (Math.hypot(x - cur.left, y - cur.top) < 150 && tries < 20);
+      } while ((Math.hypot(x - cur.left, y - cur.top) < 150 || coversYes(x, y)) && tries < 50);
       noBtn.style.left = x + "px";
       noBtn.style.top = y + "px";
     }
