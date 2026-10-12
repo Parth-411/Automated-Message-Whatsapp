@@ -171,6 +171,62 @@
       color: var(--pink-dark);
     }
 
+    .hint { min-height: 22px; margin-top: 6px; font-size: 0.9rem; color: var(--muted); font-style: italic; }
+
+    /* ---------- Emoji tiles ---------- */
+    .tile-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .tile {
+      background: #fff;
+      border: 2px solid var(--rose);
+      border-radius: 18px;
+      padding: 14px 6px 10px;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      color: var(--text);
+    }
+    .tile:hover { border-color: var(--pink); transform: translateY(-3px); }
+    .tile-emoji { font-size: 2.1rem; line-height: 1; }
+    .tile-label { font-size: 0.8rem; font-weight: 600; }
+    .tile.selected { border-color: var(--pink); background: #ffe8f0; box-shadow: 0 0 0 3px rgba(255,107,157,.25); }
+    .tile.wrong, .tile-grid.wrong { animation: shake 0.4s; }
+    .tile.wrong { border-color: #ff8a8a; background: #fff0f0; }
+    .tile.right { border-color: var(--success); background: #effaf3; }
+    .submit { margin-top: 16px; font-size: 1rem; padding: 12px 32px; }
+
+    /* ---------- Text answer ---------- */
+    .text-form { display: flex; flex-direction: column; align-items: center; }
+    .text-input {
+      width: 100%;
+      font: inherit; font-size: 1.05rem;
+      padding: 14px 18px;
+      border: 2px solid var(--rose);
+      border-radius: 16px;
+      outline: none;
+      text-align: center;
+      color: var(--text);
+      background: #fff;
+    }
+    .text-input:focus { border-color: var(--pink); box-shadow: 0 0 0 3px rgba(255,107,157,.2); }
+    .text-input.wrong { animation: shake 0.4s; border-color: #ff8a8a; }
+    .text-input.right { border-color: var(--success); background: #effaf3; }
+
+    /* ---------- Wordle ---------- */
+    .wordle-note { font-size: 0.85rem; color: var(--muted); margin-bottom: 12px; }
+    .wordle-board { display: grid; gap: 6px; margin-bottom: 14px; }
+    .wordle-row { display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: 5px; }
+    .wordle-cell {
+      aspect-ratio: 1;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 1.1rem;
+      border: 2px solid #ecd9e1; border-radius: 8px;
+      background: #fff; color: var(--text);
+    }
+    .wordle-cell.correct, .wordle-cell.present, .wordle-cell.absent { color: #fff; border-color: transparent; animation: flip 0.45s both; }
+    .wordle-cell.correct { background: #6aaa64; }
+    .wordle-cell.present { background: #e0b44c; }
+    .wordle-cell.absent  { background: #b8a9b0; }
+    .wordle-input { letter-spacing: 0.3em; text-transform: uppercase; font-weight: 700; }
+    @keyframes flip { 0% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
+
     /* ---------- Final question ---------- */
     .choice-row {
       display: flex;
@@ -245,6 +301,7 @@
     <h2 id="questionText"></h2>
     <div class="options" id="options"></div>
     <div class="feedback" id="feedback"></div>
+    <div class="hint" id="hint"></div>
   </section>
 
   <!-- ==================== FINAL QUESTION SCREEN ==================== -->
@@ -265,7 +322,7 @@
     <!-- ✏️ EDIT: Your sweet final message -->
     <p class="final-message">
       You just made me the happiest person in the world, Simran. 💕<br /><br />
-      [Insert your sweet final message here]
+      Now, about that vineyard trip I've been wanting to take with you... 🍷🍇<br />Pack your bags, girlfriend. 😌💕
     </p>
   </section>
 
@@ -273,40 +330,64 @@
     /* =====================================================================
        ✏️✏️✏️  EDIT YOUR QUIZ QUESTIONS HERE  ✏️✏️✏️
        ---------------------------------------------------------------------
-       - "question": the question text
-       - "options":  the answer choices shown as buttons (add or remove as you like)
-       - "correct":  the position of the RIGHT answer in "options"
-                     (counting starts at 0 → first option = 0, second = 1, ...)
+       Each question has a "type" that decides how she answers:
+
+       "tiles"  → tap ONE tile.      "correct" = position of the right tile
+                                      (counting from 0: first tile = 0, second = 1 ...)
+       "wordle" → guess a word, Wordle style (green = right spot, yellow = wrong
+                  spot, grey = not in word). "answer" must be ONE word, letters only.
+       "text"   → type the answer.   "accept" = list of answers that count as right
+                                      (case and small typos are forgiven)
+       "multi"  → pick ALL the right tiles. "correct" = positions of the right tiles
+
+       "hints" (optional) → shown one by one after each wrong try.
        ===================================================================== */
     const QUESTIONS = [
       {
-        question: "[Insert Inside Joke Question #1 Here]",
+        type: "tiles",
+        question: "What is Parth's favourite fruit?",
         options: [
-          "[Wrong Answer A]",
-          "[Correct Answer]",
-          "[Wrong Answer B]",
-          "[Wrong Answer C]"
+          { emoji: "🍓", label: "Strawberry" },
+          { emoji: "🥭", label: "Mango" },
+          { emoji: "🫐", label: "Blueberry" },
+          { emoji: "🍉", label: "Watermelon" },
+          { emoji: "🍍", label: "Pineapple" },
+          { emoji: "🍒", label: "Cherry" }
         ],
-        correct: 1
+        correct: 2
       },
       {
-        question: "[Insert Question #2 Here — e.g. Where did we first meet?]",
-        options: [
-          "[Correct Answer]",
-          "[Wrong Answer A]",
-          "[Wrong Answer B]"
-        ],
-        correct: 0
+        type: "wordle",
+        question: "What does Parth like the most about you?",
+        answer: "KINDNESS",
+        hints: [
+          "Hint: it starts with K 😉",
+          "Hint: K _ _ D _ _ S S",
+          "Hint: K I N D _ _ S S 🥹"
+        ]
       },
       {
-        question: "[Insert Question #3 Here — e.g. What's my favourite thing about you?]",
+        type: "text",
+        question: "Who is Parth's favourite Bollywood actress?",
+        placeholder: "Type her name...",
+        accept: ["Kiara Advani", "Kiara"],
+        hints: [
+          "Hint: her initials are K.A. 🎬",
+          "Hint: Shershaah 💛"
+        ]
+      },
+      {
+        type: "multi",
+        question: "What did Parth gift you on your last birthday? (pick all 3)",
         options: [
-          "[Wrong Answer A]",
-          "[Wrong Answer B]",
-          "[Wrong Answer C]",
-          "[Correct Answer]"
+          { emoji: "🧸", label: "Teddy bear" },
+          { emoji: "🌸", label: "Perfume" },
+          { emoji: "💐", label: "Flowers" },
+          { emoji: "💍", label: "Jewellery" },
+          { emoji: "🍫", label: "Chocolate" },
+          { emoji: "📚", label: "A book" }
         ],
-        correct: 3
+        correct: [1, 2, 4]
       }
     ];
 
@@ -326,6 +407,12 @@
 
     const $ = (id) => document.getElementById(id);
     const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    const el = (tag, cls, text) => {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text != null) e.textContent = text;
+      return e;
+    };
 
     function showScreen(id) {
       document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
@@ -335,9 +422,7 @@
     /* ---------- Floating hearts ---------- */
     const HEART_EMOJIS = ["💗", "💕", "💖", "💓", "🩷", "❤️"];
     function spawnHeart() {
-      const h = document.createElement("span");
-      h.className = "heart";
-      h.textContent = pick(HEART_EMOJIS);
+      const h = el("span", "heart", pick(HEART_EMOJIS));
       h.style.left = Math.random() * 100 + "vw";
       h.style.fontSize = 14 + Math.random() * 22 + "px";
       h.style.animationDuration = 7 + Math.random() * 6 + "s";
@@ -346,51 +431,202 @@
     }
     setInterval(spawnHeart, 700);
 
-    /* ---------- Quiz ---------- */
+    /* ---------- Quiz engine ---------- */
     let current = 0;
     let locked = false;
+    let misses = 0;
+
+    function feedback(msg, good) {
+      const f = $("feedback");
+      f.style.color = good ? "var(--success)" : "var(--pink-dark)";
+      f.textContent = msg;
+    }
+
+    function wrong(extra) {
+      misses++;
+      const hints = QUESTIONS[current].hints || [];
+      const hint = hints[Math.min(misses, hints.length) - 1];
+      feedback(extra || pick(WRONG_MESSAGES), false);
+      $("hint").textContent = hint || "";
+    }
+
+    function right() {
+      locked = true;
+      feedback(pick(RIGHT_MESSAGES), true);
+      $("hint").textContent = "";
+      setTimeout(() => {
+        current++;
+        if (current < QUESTIONS.length) renderQuestion();
+        else showScreen("final");
+      }, 1100);
+    }
+
+    function shake(node) {
+      node.classList.remove("wrong");
+      void node.offsetWidth;
+      node.classList.add("wrong");
+    }
 
     function renderQuestion() {
       const q = QUESTIONS[current];
+      locked = false;
+      misses = 0;
       $("progress").textContent = `Question ${current + 1} of ${QUESTIONS.length}`;
       $("questionText").textContent = q.question;
       $("feedback").textContent = "";
+      $("hint").textContent = "";
       const box = $("options");
       box.innerHTML = "";
-      q.options.forEach((text, i) => {
-        const b = document.createElement("button");
-        b.className = "btn option";
-        b.textContent = text;
-        b.addEventListener("click", () => answer(i, b));
-        box.appendChild(b);
-      });
-      // Re-trigger the pop-in animation for each new question
+      ({ tiles: renderTiles, multi: renderMulti, text: renderText, wordle: renderWordle })[q.type](q, box);
       const card = $("quiz");
       card.style.animation = "none";
       void card.offsetWidth;
       card.style.animation = "";
-      locked = false;
     }
 
-    function answer(i, btn) {
-      if (locked) return;
-      if (i === QUESTIONS[current].correct) {
-        locked = true;
-        btn.classList.add("right");
-        $("feedback").style.color = "var(--success)";
-        $("feedback").textContent = pick(RIGHT_MESSAGES);
-        setTimeout(() => {
-          current++;
-          if (current < QUESTIONS.length) renderQuestion();
-          else showScreen("final");
-        }, 900);
-      } else {
-        btn.classList.remove("wrong");
-        void btn.offsetWidth; // restart shake animation
-        btn.classList.add("wrong");
-        $("feedback").style.color = "var(--pink-dark)";
-        $("feedback").textContent = pick(WRONG_MESSAGES);
-      }
+    function makeTile(opt) {
+      const t = el("button", "btn tile");
+      t.append(el("span", "tile-emoji", opt.emoji), el("span", "tile-label", opt.label));
+      return t;
+    }
+
+    /* Single-choice emoji tiles */
+    function renderTiles(q, box) {
+      const grid = el("div", "tile-grid");
+      q.options.forEach((opt, i) => {
+        const t = makeTile(opt);
+        t.addEventListener("click", () => {
+          if (locked) return;
+          if (i === q.correct) { t.classList.add("right"); right(); }
+          else { shake(t); wrong(); }
+        });
+        grid.appendChild(t);
+      });
+      box.appendChild(grid);
+    }
+
+    /* Pick-all-that-apply tiles */
+    function renderMulti(q, box) {
+      const grid = el("div", "tile-grid");
+      const chosen = new Set();
+      q.options.forEach((opt, i) => {
+        const t = makeTile(opt);
+        t.addEventListener("click", () => {
+          if (locked) return;
+          chosen.has(i) ? chosen.delete(i) : chosen.add(i);
+          t.classList.toggle("selected");
+        });
+        grid.appendChild(t);
+      });
+      const submit = el("button", "btn btn-primary submit", "Check 🎁");
+      submit.addEventListener("click", () => {
+        if (locked) return;
+        const hits = q.correct.filter((i) => chosen.has(i)).length;
+        if (hits === q.correct.length && chosen.size === q.correct.length) {
+          grid.querySelectorAll(".selected").forEach((t) => t.classList.add("right"));
+          right();
+        } else {
+          shake(grid);
+          const extra = chosen.size > q.correct.length ? " (that's too many 😏)" : "";
+          wrong(`You got ${hits} of ${q.correct.length} right${extra}. Try again!`);
+        }
+      });
+      box.append(grid, submit);
+    }
+
+    /* Free text with typo tolerance */
+    const norm = (s) => s.toLowerCase().replace(/[^a-z]/g, "");
+    function editDistance(a, b) {
+      const dp = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+      for (let j = 1; j <= b.length; j++) dp[0][j] = j;
+      for (let i = 1; i <= a.length; i++)
+        for (let j = 1; j <= b.length; j++)
+          dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1,
+                              dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      return dp[a.length][b.length];
+    }
+    function renderText(q, box) {
+      const form = el("form", "text-form");
+      const input = el("input", "text-input");
+      input.placeholder = q.placeholder || "Type your answer...";
+      input.autocomplete = "off";
+      const submit = el("button", "btn btn-primary submit", "Submit");
+      form.append(input, submit);
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (locked || !input.value.trim()) return;
+        const guess = norm(input.value);
+        const ok = q.accept.some((a) => {
+          const n = norm(a);
+          return editDistance(guess, n) <= (n.length > 6 ? 2 : 1);
+        });
+        if (ok) { input.classList.add("right"); right(); }
+        else { shake(input); wrong(); }
+      });
+      box.appendChild(form);
+      setTimeout(() => input.focus(), 50);
+    }
+
+    /* Wordle-style word guess */
+    function renderWordle(q, box) {
+      const answer = q.answer.toUpperCase();
+      const n = answer.length;
+      const board = el("div", "wordle-board");
+      board.style.setProperty("--cols", n);
+      const form = el("form", "text-form");
+      const input = el("input", "text-input wordle-input");
+      input.maxLength = n;
+      input.placeholder = `${n} letters`;
+      input.autocomplete = "off";
+      input.autocapitalize = "characters";
+      const submit = el("button", "btn btn-primary submit", "Guess");
+      form.append(input, submit);
+      box.append(el("div", "wordle-note", `Guess the ${n}-letter word 💛 Green = right spot, yellow = wrong spot`), board, form);
+
+      // Empty row as a preview of the word length
+      const preview = el("div", "wordle-row");
+      for (let i = 0; i < n; i++) preview.appendChild(el("div", "wordle-cell"));
+      board.appendChild(preview);
+
+      input.addEventListener("input", () => {
+        input.value = input.value.toUpperCase().replace(/[^A-Z]/g, "");
+        [...preview.children].forEach((c, i) => (c.textContent = input.value[i] || ""));
+      });
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (locked) return;
+        const guess = input.value.toUpperCase();
+        if (guess.length !== n) {
+          feedback(`It needs exactly ${n} letters 🙈`, false);
+          shake(input);
+          return;
+        }
+        // Standard Wordle colouring (handles repeated letters)
+        const result = Array(n).fill("absent");
+        const left = {};
+        for (let i = 0; i < n; i++) {
+          if (guess[i] === answer[i]) result[i] = "correct";
+          else left[answer[i]] = (left[answer[i]] || 0) + 1;
+        }
+        for (let i = 0; i < n; i++) {
+          if (result[i] !== "correct" && left[guess[i]] > 0) { result[i] = "present"; left[guess[i]]--; }
+        }
+        const row = el("div", "wordle-row");
+        result.forEach((r, i) => {
+          const c = el("div", `wordle-cell ${r}`, guess[i]);
+          c.style.animationDelay = i * 0.08 + "s";
+          row.appendChild(c);
+        });
+        board.insertBefore(row, preview);
+        // Keep only the last 5 guesses on screen
+        while (board.children.length > 6) board.removeChild(board.firstChild);
+        input.value = "";
+        [...preview.children].forEach((c) => (c.textContent = ""));
+        if (guess === answer) { preview.remove(); input.disabled = true; right(); }
+        else wrong("Not quite! Look at the colours 👀");
+      });
+      setTimeout(() => input.focus(), 50);
     }
 
     $("startBtn").addEventListener("click", () => {
